@@ -4,5 +4,6 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="preference_title">Preferences</string>
     <string name="preference_summary">Update signage URL</string>
-    <string name="default_signage_url">https://internaldemo.fwicloud.com/cpweb516/?sign=Lobby%20Experience%20Demo&amp;client=blawrence</string>
+    <string name="mersive_signage_url">https://digitalsignage.mersive.com</string>
+    <string name="fwi_signage_url">https://internaldemo.fwicloud.com/cpweb516/?sign=Lobby%20Experience%20Demo&amp;client=blawrence</string>
 </resources>

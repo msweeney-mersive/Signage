@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
@@ -16,6 +17,7 @@ import com.foobar.signage.databinding.ActivityFullscreenBinding
  * status bar and navigation/system bar) with user interaction.
  */
 class FullscreenActivity : AppCompatActivity() {
+    private val tag = this.javaClass.simpleName
 
     private lateinit var binding: ActivityFullscreenBinding
     private lateinit var fullscreenContent: WebView
@@ -80,7 +82,10 @@ class FullscreenActivity : AppCompatActivity() {
         fullscreenContent.setOnClickListener { toggle() }
 
         binding.signageWv.settings.setJavaScriptEnabled(true)
-        binding.signageWv.loadUrl(resources.getString(R.string.default_signage_url))
+
+        val signageUrl = resources.getString(R.string.fwi_signage_url)
+        binding.signageWv.loadUrl(signageUrl)
+        Log.d(tag, "onCreate(), WebView loading URL: \n\t${signageUrl}")
 
         binding.signageWv.setOnTouchListener(delayHideTouchListener)
 
