@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <Preference
+        android:key="preference_key"
+        android:title="@string/preference_title"
+        android:summary="@string/preference_summary" />
+
+</androidx.preference.PreferenceScreen>

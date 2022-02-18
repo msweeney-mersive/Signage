@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Signage</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="preference_title">Preferences</string>
+    <string name="preference_summary">Update signage URL</string>
+    <string name="default_signage_url">https://internaldemo.fwicloud.com/cpweb516/?sign=Lobby%20Experience%20Demo&amp;client=blawrence</string>
+</resources>
