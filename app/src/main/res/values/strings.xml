@@ -5,5 +5,13 @@
     <string name="preference_title">Preferences</string>
     <string name="preference_summary">Update signage URL</string>
     <string name="mersive_signage_url">https://digitalsignage.mersive.com</string>
+    <string name="appspace_signage_url">https://cloud.appspace.com/app/</string>
+    <string name="threatmap_signage_url">https://threatmap.checkpoint.com</string>
+    <string name="gst_signage_url">https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm</string>
     <string name="fwi_signage_url">https://internaldemo.fwicloud.com/cpweb516/?sign=Lobby%20Experience%20Demo&amp;client=blawrence</string>
+    <string name="basemark_signage_url">https://web.basemark.com/run/</string>
+    <string name="weather_signage_url">http://weather.com/</string>
+    <string name="weather_boulder_signage_url">https://weather.com/weather/today/l/2ac0cf602b41314cc2dc3505149d02d80bac9ef1ff2b763c7b0125eac59cebf4/</string>
+    <string name="solstice_signage_url">http://127.0.0.1:3000/signage</string>
+    <string name="jetstream_signage_url">https://browserbench.org/JetStream/</string>
 </resources>
