@@ -23,6 +23,7 @@ class FullscreenActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityFullscreenBinding
     private lateinit var fullscreenContent: WebView
+    @Suppress("DEPRECATION")
     private val hideHandler = Handler()
 
     @SuppressLint("InlinedApi")
@@ -68,7 +69,7 @@ class FullscreenActivity : AppCompatActivity() {
         false
     }
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility", "SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -83,24 +84,25 @@ class FullscreenActivity : AppCompatActivity() {
         fullscreenContent = binding.signageWv
         fullscreenContent.setOnClickListener { toggle() }
 
-        binding.signageWv.settings.setJavaScriptEnabled(true)
+        binding.signageWv.settings.javaScriptEnabled = true
 
         // other settings used in Solstice DS
-        binding.signageWv.settings.setAppCacheEnabled(false);
-        binding.signageWv.settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        binding.signageWv.settings.setAllowFileAccess(false);
-        binding.signageWv.settings.setUseWideViewPort(true);
-        binding.signageWv.settings.setLoadWithOverviewMode(true);
-        binding.signageWv.settings.setSupportZoom( false );
-        binding.signageWv.settings.setDomStorageEnabled( true );
-        binding.signageWv.settings.setMediaPlaybackRequiresUserGesture( false );
+        @Suppress("DEPRECATION", "DEPRECATION")
+        binding.signageWv.settings.setAppCacheEnabled(false)
+        binding.signageWv.settings.cacheMode = WebSettings.LOAD_DEFAULT
+        binding.signageWv.settings.allowFileAccess = false
+        binding.signageWv.settings.useWideViewPort = true
+        binding.signageWv.settings.loadWithOverviewMode = true
+        binding.signageWv.settings.setSupportZoom( false )
+        binding.signageWv.settings.domStorageEnabled = true
+        binding.signageWv.settings.mediaPlaybackRequiresUserGesture = false
 
-        binding.signageWv.setInitialScale(0); // Default scale
+        binding.signageWv.setInitialScale(0) // Default scale
 
-        CookieManager.getInstance().setAcceptThirdPartyCookies( binding.signageWv, true);
+        CookieManager.getInstance().setAcceptThirdPartyCookies( binding.signageWv, true)
 
         val OSversion = Build.VERSION.RELEASE
-        val userAgentWithSolstice: String = (binding.signageWv.settings.getUserAgentString()
+        val userAgentWithSolstice: String = (binding.signageWv.settings.userAgentString
             .replace("Linux; ", "") // strip OS name
             .replace("Android $OSversion; ", "") // strip OS version
             .replace("; wv", "") // webview identifier
@@ -108,7 +110,7 @@ class FullscreenActivity : AppCompatActivity() {
                 + " Solstice Pod " // identify as a pod
                 + "5.5") // with our current version
 
-        binding.signageWv.settings.setUserAgentString(userAgentWithSolstice)
+        binding.signageWv.settings.userAgentString = userAgentWithSolstice
 
         /* other settings that may or may not be worth looking at */
         //binding.signageWv.settings.setDatabaseEnabled(false);
@@ -124,6 +126,7 @@ class FullscreenActivity : AppCompatActivity() {
 
         binding.signageWv.webViewClient = object : WebViewClient() {
 
+            @SuppressLint("WebViewClientOnReceivedSslError")
             override fun onReceivedSslError(
                 view: WebView?,
                 handler: SslErrorHandler,
@@ -169,6 +172,7 @@ class FullscreenActivity : AppCompatActivity() {
                 super.onReceivedError(view, request, error)
             }
 
+            @Deprecated("Deprecated in Java")
             override fun onReceivedError(
                 view: WebView?,
                 errorCode: Int,
