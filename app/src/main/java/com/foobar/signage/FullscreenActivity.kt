@@ -1,7 +1,8 @@
 package com.foobar.signage
 
-import androidx.appcompat.app.AppCompatActivity
 import android.annotation.SuppressLint
+import android.net.Uri
+import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -9,7 +10,8 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
-import android.webkit.WebView
+import android.webkit.*
+import androidx.appcompat.app.AppCompatActivity
 import com.foobar.signage.databinding.ActivityFullscreenBinding
 
 /**
@@ -21,6 +23,7 @@ class FullscreenActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityFullscreenBinding
     private lateinit var fullscreenContent: WebView
+    @Suppress("DEPRECATION")
     private val hideHandler = Handler()
 
     @SuppressLint("InlinedApi")
@@ -66,7 +69,7 @@ class FullscreenActivity : AppCompatActivity() {
         false
     }
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility", "SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -81,13 +84,117 @@ class FullscreenActivity : AppCompatActivity() {
         fullscreenContent = binding.signageWv
         fullscreenContent.setOnClickListener { toggle() }
 
-        binding.signageWv.settings.setJavaScriptEnabled(true)
+        binding.signageWv.settings.javaScriptEnabled = true
 
-        val signageUrl = resources.getString(R.string.fwi_signage_url)
+        // other settings used in Solstice DS
+        @Suppress("DEPRECATION", "DEPRECATION")
+        binding.signageWv.settings.setAppCacheEnabled(false)
+        binding.signageWv.settings.cacheMode = WebSettings.LOAD_DEFAULT
+        binding.signageWv.settings.allowFileAccess = false
+        binding.signageWv.settings.useWideViewPort = true
+        binding.signageWv.settings.loadWithOverviewMode = true
+        binding.signageWv.settings.setSupportZoom( false )
+        binding.signageWv.settings.domStorageEnabled = true
+        binding.signageWv.settings.mediaPlaybackRequiresUserGesture = false
+
+        binding.signageWv.setInitialScale(0) // Default scale
+
+        CookieManager.getInstance().setAcceptThirdPartyCookies( binding.signageWv, true)
+
+        val OSversion = Build.VERSION.RELEASE
+        val userAgentWithSolstice: String = (binding.signageWv.settings.userAgentString
+            .replace("Linux; ", "") // strip OS name
+            .replace("Android $OSversion; ", "") // strip OS version
+            .replace("; wv", "") // webview identifier
+            .replace("Mobile ", "") // mobile identifier
+                + " Solstice Pod " // identify as a pod
+                + "5.5") // with our current version
+
+        binding.signageWv.settings.userAgentString = userAgentWithSolstice
+
+        /* other settings that may or may not be worth looking at */
+        //binding.signageWv.settings.setDatabaseEnabled(false);
+        //binding.signageWv.settings.setDomStorageEnabled(false);
+        //binding.signageWv.settings.setGeolocationEnabled(false);
+        //binding.signageWv.settings.setSaveFormData(false);
+
+        val signageUrl = resources.getString(R.string.weather_boulder_signage_url)
         binding.signageWv.loadUrl(signageUrl)
         Log.d(tag, "onCreate(), WebView loading URL: \n\t${signageUrl}")
 
         binding.signageWv.setOnTouchListener(delayHideTouchListener)
+
+        binding.signageWv.webViewClient = object : WebViewClient() {
+
+            @SuppressLint("WebViewClientOnReceivedSslError")
+            override fun onReceivedSslError(
+                view: WebView?,
+                handler: SslErrorHandler,
+                error: SslError?
+            ) {
+                Log.w(tag, "onReceivedSslError(), error: $error?")
+                handler.proceed()
+            }
+
+            override fun onReceivedHttpError(
+                view: WebView?, request: WebResourceRequest, errorResponse: WebResourceResponse
+            ) {
+                if (view != null) {
+                    // Run url through decoding twice to get rid of all encoding
+                    val urlDecode = Uri.decode(Uri.decode(request.url.toString()))
+                    val err = String.format(
+                        "Digital Signage loading url  failed, error code: %d, error description: %s, url: %s",
+                        errorResponse.statusCode,
+                        errorResponse.reasonPhrase,
+                        urlDecode
+                    )
+                    Log.w(tag, "onReceivedHttpError(), error: $err?")
+                }
+                super.onReceivedHttpError(view, request, errorResponse)
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest,
+                error: WebResourceError
+            ) {
+                if (view != null) {
+                    // Run url through decoding twice to get rid of all encoding
+                    val urlDecode = Uri.decode(Uri.decode(request.url.toString()))
+                    val err = String.format(
+                        "Digital Signage loading url  failed, error code: %d, error description: %s, url: %s",
+                        error.errorCode,
+                        error.description,
+                        urlDecode
+                    )
+                    Log.w(tag, "onReceivedError(), error: $err?")
+                }
+                super.onReceivedError(view, request, error)
+            }
+
+            @Deprecated("Deprecated in Java")
+            override fun onReceivedError(
+                view: WebView?,
+                errorCode: Int,
+                description: String?,
+                failingUrl: String?
+            ) {
+                if (view != null) {
+                    // Run url through decoding twice to get rid of all encoding
+                    val urlDecode = Uri.decode(Uri.decode(failingUrl))
+                    val err = String.format(
+                        "Digital Signage loading url failed, error code: %d, error description: %s, url: %s",
+                        errorCode,
+                        description,
+                        urlDecode
+                    )
+                    Log.w(tag, "onReceivedError(), error: $err?")
+                }
+                super.onReceivedError(view, errorCode, description, failingUrl)
+            }
+        }
+
+
 
 /*        supportFragmentManager
             .beginTransaction()
