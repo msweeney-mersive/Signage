@@ -118,7 +118,11 @@ class FullscreenActivity : AppCompatActivity() {
         //binding.signageWv.settings.setGeolocationEnabled(false);
         //binding.signageWv.settings.setSaveFormData(false);
 
-        val signageUrl = resources.getString(R.string.weather_boulder_signage_url)
+
+        /*
+        Until we add a UI with a dropdown to select URLS change the string here and rebuild
+         */
+        val signageUrl = resources.getString(R.string.mersive_signage_url)
         binding.signageWv.loadUrl(signageUrl)
         Log.d(tag, "onCreate(), WebView loading URL: \n\t${signageUrl}")
 

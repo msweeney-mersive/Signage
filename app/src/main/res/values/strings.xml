@@ -10,8 +10,11 @@
     <string name="gst_signage_url">https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm</string>
     <string name="fwi_signage_url">https://internaldemo.fwicloud.com/cpweb516/?sign=Lobby%20Experience%20Demo&amp;client=blawrence</string>
     <string name="basemark_signage_url">https://web.basemark.com/run/</string>
+    <string name="jetstream_signage_url">https://browserbench.org/JetStream/</string>
     <string name="weather_signage_url">http://weather.com/</string>
     <string name="weather_boulder_signage_url">https://weather.com/weather/today/l/2ac0cf602b41314cc2dc3505149d02d80bac9ef1ff2b763c7b0125eac59cebf4/</string>
     <string name="solstice_signage_url">http://127.0.0.1:3000/signage</string>
-    <string name="jetstream_signage_url">https://browserbench.org/JetStream/</string>
+    <string name="solstice_splash_url">http://127.0.0.1:3000/splash</string>
+    <string name="home_meerkat_url">http://192.168.0.14</string>
+    <string name="dancing_troll_url">https://www.youtube.com/embed/y1EpaboCERg?rel=0?version=3&amp;autoplay=1&amp;loop=1&amp;controls=0&amp;&amp;showinfo=0</string>
 </resources>
