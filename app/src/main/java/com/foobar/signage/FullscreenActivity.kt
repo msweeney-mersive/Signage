@@ -1,6 +1,10 @@
 package com.foobar.signage
 
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
@@ -19,10 +23,17 @@ import com.foobar.signage.databinding.ActivityFullscreenBinding
  * status bar and navigation/system bar) with user interaction.
  */
 class FullscreenActivity : AppCompatActivity() {
+    // info for Intents
+    val SIGNAGE_URL_KEY    = "SIGNAGE_URL"
+    val SIGNAGE_SCREEN_KEY = "SIGNAGE_KEY"
+    val SIGNAGE_INTENT_SRC = "SIGNAGE_SRC"
+    val SHOW_KEY_SECONDS   = "SIGNAGE_KEY_SEC"
+    val ACTION_FINISH = "com.mersive.solstice.server.action.FINISH"
+
     private val tag = this.javaClass.simpleName
 
     private lateinit var binding: ActivityFullscreenBinding
-    private lateinit var fullscreenContent: WebView
+    private lateinit var webView: WebView
     @Suppress("DEPRECATION")
     private val hideHandler = Handler()
 
@@ -30,12 +41,12 @@ class FullscreenActivity : AppCompatActivity() {
     private val hidePart2Runnable = Runnable {
         // Delayed removal of status and navigation bar
         if (Build.VERSION.SDK_INT >= 30) {
-            fullscreenContent.windowInsetsController?.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+            webView.windowInsetsController?.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
         } else {
             // Note that some of these constants are new as of API 16 (Jelly Bean)
             // and API 19 (KitKat). It is safe to use them, as they are inlined
             // at compile-time and do nothing on earlier devices.
-            fullscreenContent.systemUiVisibility =
+            webView.systemUiVisibility =
                 View.SYSTEM_UI_FLAG_LOW_PROFILE or
                         View.SYSTEM_UI_FLAG_FULLSCREEN or
                         View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
@@ -69,6 +80,18 @@ class FullscreenActivity : AppCompatActivity() {
         false
     }
 
+    private val solsticeReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            Log.d(tag, "received intent")
+            if (intent.hasExtra(SIGNAGE_SCREEN_KEY)) {
+                val t = intent.getIntExtra(SHOW_KEY_SECONDS,10)
+                val s = intent.getStringExtra(SIGNAGE_SCREEN_KEY)
+
+                Log.d(tag, "received intent with screen key: ${s} and time: ${t}")
+            }
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility", "SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,9 +103,28 @@ class FullscreenActivity : AppCompatActivity() {
 
         isFullscreen = true
 
+        initWebView()
+
+/*        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.signage_wv, SignagePreferences())
+            .commit()*/
+    }
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+        delayedHide(100)
+    }
+
+    private fun initWebView() {
+
         // Set up the user interaction to manually show or hide the system UI.
-        fullscreenContent = binding.signageWv
-        fullscreenContent.setOnClickListener { toggle() }
+        webView = binding.signageWv
+        webView.setOnClickListener { toggle() }
 
         binding.signageWv.settings.javaScriptEnabled = true
 
@@ -122,7 +164,7 @@ class FullscreenActivity : AppCompatActivity() {
         /*
         Until we add a UI with a dropdown to select URLS change the string here and rebuild
          */
-        val signageUrl = resources.getString(R.string.mersive_signage_url)
+        val signageUrl = resources.getString(R.string.home_meerkat_url)
         binding.signageWv.loadUrl(signageUrl)
         Log.d(tag, "onCreate(), WebView loading URL: \n\t${signageUrl}")
 
@@ -147,7 +189,7 @@ class FullscreenActivity : AppCompatActivity() {
                     // Run url through decoding twice to get rid of all encoding
                     val urlDecode = Uri.decode(Uri.decode(request.url.toString()))
                     val err = String.format(
-                        "Digital Signage loading url  failed, error code: %d, error description: %s, url: %s",
+                        "Foobar Signage loading url  failed, error code: %d, error description: %s, url: %s",
                         errorResponse.statusCode,
                         errorResponse.reasonPhrase,
                         urlDecode
@@ -166,7 +208,7 @@ class FullscreenActivity : AppCompatActivity() {
                     // Run url through decoding twice to get rid of all encoding
                     val urlDecode = Uri.decode(Uri.decode(request.url.toString()))
                     val err = String.format(
-                        "Digital Signage loading url  failed, error code: %d, error description: %s, url: %s",
+                        "Foobar Signage loading url  failed, error code: %d, error description: %s, url: %s",
                         error.errorCode,
                         error.description,
                         urlDecode
@@ -187,7 +229,7 @@ class FullscreenActivity : AppCompatActivity() {
                     // Run url through decoding twice to get rid of all encoding
                     val urlDecode = Uri.decode(Uri.decode(failingUrl))
                     val err = String.format(
-                        "Digital Signage loading url failed, error code: %d, error description: %s, url: %s",
+                        "Foobar Signage loading url failed, error code: %d, error description: %s, url: %s",
                         errorCode,
                         description,
                         urlDecode
@@ -197,22 +239,20 @@ class FullscreenActivity : AppCompatActivity() {
                 super.onReceivedError(view, errorCode, description, failingUrl)
             }
         }
-
-
-
-/*        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.signage_wv, SignagePreferences())
-            .commit()*/
     }
 
-    override fun onPostCreate(savedInstanceState: Bundle?) {
-        super.onPostCreate(savedInstanceState)
+    override fun onStart() {
+        super.onStart()
+        val intentFilter = IntentFilter("com.mersive.solstice.server.DigitalSignage")
+        registerReceiver(solsticeReceiver, intentFilter)
 
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100)
+        val intentFilter2 = IntentFilter("DigitalSignage")
+        registerReceiver(solsticeReceiver, intentFilter2)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unregisterReceiver(solsticeReceiver)
     }
 
     private fun toggle() {
@@ -236,9 +276,9 @@ class FullscreenActivity : AppCompatActivity() {
     private fun show() {
         // Show the system bar
         if (Build.VERSION.SDK_INT >= 30) {
-            fullscreenContent.windowInsetsController?.show(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+            webView.windowInsetsController?.show(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
         } else {
-            fullscreenContent.systemUiVisibility =
+            webView.systemUiVisibility =
                 View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
                         View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
         }
