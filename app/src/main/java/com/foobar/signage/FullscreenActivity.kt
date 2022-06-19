@@ -95,6 +95,7 @@ class FullscreenActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility", "SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(tag, "onCreate()")
 
         binding = ActivityFullscreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -144,13 +145,17 @@ class FullscreenActivity : AppCompatActivity() {
         CookieManager.getInstance().setAcceptThirdPartyCookies( binding.signageWv, true)
 
         val OSversion = Build.VERSION.RELEASE
+
+
+        // copied from solstice.server.DigitalSignage
+        // At bottom the "5.5.0" is the output of `ServerDisplay.solsticeVersion()` on Solstice
         val userAgentWithSolstice: String = (binding.signageWv.settings.userAgentString
             .replace("Linux; ", "") // strip OS name
             .replace("Android $OSversion; ", "") // strip OS version
             .replace("; wv", "") // webview identifier
             .replace("Mobile ", "") // mobile identifier
                 + " Solstice Pod " // identify as a pod
-                + "5.5") // with our current version
+                + "5.5.0") // with our current version
 
         binding.signageWv.settings.userAgentString = userAgentWithSolstice
 
@@ -166,7 +171,7 @@ class FullscreenActivity : AppCompatActivity() {
          */
         val signageUrl = resources.getString(R.string.home_meerkat_url)
         binding.signageWv.loadUrl(signageUrl)
-        Log.d(tag, "onCreate(), WebView loading URL: \n\t${signageUrl}")
+        Log.d(tag, "initWebView(), WebView loading URL: \n\t${signageUrl}")
 
         binding.signageWv.setOnTouchListener(delayHideTouchListener)
 
@@ -243,16 +248,30 @@ class FullscreenActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        val intentFilter = IntentFilter("com.mersive.solstice.server.DigitalSignage")
+        Log.d(tag, "onStart()")
+        val intentFilter = IntentFilter("screenkey.secret.handshake")
         registerReceiver(solsticeReceiver, intentFilter)
+    }
 
-        val intentFilter2 = IntentFilter("DigitalSignage")
-        registerReceiver(solsticeReceiver, intentFilter2)
+    override fun onResume() {
+        Log.d(tag, "onResume()")
+        super.onResume()
+    }
+
+    override fun onPause() {
+        Log.d(tag, "onPause()")
+        super.onPause()
     }
 
     override fun onStop() {
+        Log.d(tag, "onStop()")
         super.onStop()
         unregisterReceiver(solsticeReceiver)
+    }
+
+    override fun onDestroy() {
+        Log.d(tag, "onDestroy()")
+        super.onDestroy()
     }
 
     private fun toggle() {
