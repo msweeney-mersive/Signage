@@ -15,8 +15,10 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import android.webkit.*
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.foobar.signage.databinding.ActivityFullscreenBinding
+
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -32,8 +34,12 @@ class FullscreenActivity : AppCompatActivity() {
 
     private val tag = this.javaClass.simpleName
 
+    //private val screenKeyDialog = DialogBox()
+
     private lateinit var binding: ActivityFullscreenBinding
     private lateinit var webView: WebView
+    private lateinit var wvUrl: String
+
     @Suppress("DEPRECATION")
     private val hideHandler = Handler()
 
@@ -87,7 +93,28 @@ class FullscreenActivity : AppCompatActivity() {
                 val t = intent.getIntExtra(SHOW_KEY_SECONDS,10)
                 val s = intent.getStringExtra(SIGNAGE_SCREEN_KEY)
 
-                Log.d(tag, "received intent with screen key: ${s} and time: ${t}")
+                Log.i(tag, "received intent with screenkey: \"${s}\" and time: ${t}")
+
+                val duration = Toast.LENGTH_LONG
+
+                val toast: Toast = Toast.makeText(context, "screenkey: ${s}", duration)
+                toast.show()
+        /*    STILL PROBLEM'S WITH KOTLIN VERSION OF THE DIALOG
+                if ( s != null) {
+                    showScreenKey(s,t);
+                }
+                */
+            } else if (intent.hasExtra(SIGNAGE_URL_KEY)) {
+                val s = intent.getStringExtra(SIGNAGE_URL_KEY)
+
+                Log.i(tag, "received intent with URL: ${s}")
+                if (s != null && s != wvUrl) {
+                    wvUrl = s;
+
+                    runOnUiThread({
+                        webView.loadUrl(wvUrl)
+                    })
+                }
             }
         }
     }
@@ -103,13 +130,6 @@ class FullscreenActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         isFullscreen = true
-
-        initWebView()
-
-/*        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.signage_wv, SignagePreferences())
-            .commit()*/
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
@@ -119,6 +139,29 @@ class FullscreenActivity : AppCompatActivity() {
         // created, to briefly hint to the user that UI controls
         // are available.
         delayedHide(100)
+    }
+
+    private fun parseIntent() {
+        wvUrl = ""
+        val src =
+            intent.getStringExtra("INTENT_SRC")
+        Log.d(tag, "parseIntent() src: $src")
+        if (src == "startSignage") {
+            var url =
+                intent.getStringExtra("INTENT_URL")
+            if (url != null && url != wvUrl) {
+                wvUrl = url
+                Log.d(tag, "parseIntent() url: $url")
+            }
+        } else if (src == "showScreenKey") {
+            //showScreenKey()
+        }
+    }
+
+
+    private fun showScreenKey(msg: String, time: Int) {
+        Log.d(tag, "showScreenKey")
+        //screenKeyDialog.dialogBox(msg!!, time, this)
     }
 
     private fun initWebView() {
@@ -165,13 +208,15 @@ class FullscreenActivity : AppCompatActivity() {
         //binding.signageWv.settings.setGeolocationEnabled(false);
         //binding.signageWv.settings.setSaveFormData(false);
 
-
+        parseIntent()
         /*
         Until we add a UI with a dropdown to select URLS change the string here and rebuild
          */
-        val signageUrl = resources.getString(R.string.home_meerkat_url)
-        binding.signageWv.loadUrl(signageUrl)
-        Log.d(tag, "initWebView(), WebView loading URL: \n\t${signageUrl}")
+        if (wvUrl == null || wvUrl.isEmpty()) {
+            wvUrl = resources.getString(R.string.threatmap_signage_url)
+        }
+        binding.signageWv.loadUrl(wvUrl)
+        Log.d(tag, "initWebView(), WebView loading URL: \n\t${wvUrl}")
 
         binding.signageWv.setOnTouchListener(delayHideTouchListener)
 
@@ -183,7 +228,7 @@ class FullscreenActivity : AppCompatActivity() {
                 handler: SslErrorHandler,
                 error: SslError?
             ) {
-                Log.w(tag, "onReceivedSslError(), error: $error?")
+                Log.v(tag, "onReceivedSslError(), error: $error?")
                 handler.proceed()
             }
 
@@ -199,7 +244,7 @@ class FullscreenActivity : AppCompatActivity() {
                         errorResponse.reasonPhrase,
                         urlDecode
                     )
-                    Log.w(tag, "onReceivedHttpError(), error: $err?")
+                    Log.v(tag, "onReceivedHttpError(), error: $err?")
                 }
                 super.onReceivedHttpError(view, request, errorResponse)
             }
@@ -218,7 +263,7 @@ class FullscreenActivity : AppCompatActivity() {
                         error.description,
                         urlDecode
                     )
-                    Log.w(tag, "onReceivedError(), error: $err?")
+                    Log.v(tag, "onReceivedError(), error: $err?")
                 }
                 super.onReceivedError(view, request, error)
             }
@@ -239,7 +284,7 @@ class FullscreenActivity : AppCompatActivity() {
                         description,
                         urlDecode
                     )
-                    Log.w(tag, "onReceivedError(), error: $err?")
+                    Log.v(tag, "onReceivedError(), error: $err?")
                 }
                 super.onReceivedError(view, errorCode, description, failingUrl)
             }
@@ -249,8 +294,13 @@ class FullscreenActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         Log.d(tag, "onStart()")
+
+        initWebView()
+
         val intentFilter = IntentFilter("screenkey.secret.handshake")
         registerReceiver(solsticeReceiver, intentFilter)
+        val intentFilter2 = IntentFilter("url.secret.handshake")
+        registerReceiver(solsticeReceiver, intentFilter2)
     }
 
     override fun onResume() {
@@ -267,6 +317,10 @@ class FullscreenActivity : AppCompatActivity() {
         Log.d(tag, "onStop()")
         super.onStop()
         unregisterReceiver(solsticeReceiver)
+        Log.v(tag, "calling finish()")
+        finish()
+
+        //screenKeyDialog.cancel()
     }
 
     override fun onDestroy() {
